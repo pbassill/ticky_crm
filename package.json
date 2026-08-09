@@ -10,7 +10,10 @@
     "build": "npm run build:code && npm run build:translations",
     "lint": "eslint src/",
     "lint:fix": "eslint . --fix",
-    "release": "npm run build && node scripts/build-release.js"
+    "release": "npm run build && node scripts/build-release.js",
+    "test": "npm run build && npm run lint && npm run test:phpstan && npm run test:integration",
+    "test:integration": "./tests/integration/local_run_all.sh",
+    "test:phpstan": "./vendor/phpstan/phpstan/phpstan"
   },
   "dependencies": {
     "@nextcloud/axios": "^2.6.0",
