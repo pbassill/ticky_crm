@@ -51,6 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         nextcloud: ['32', '33', '34']
+        nextcloud_upgrade: ['32', '33']
         database: [mariadb, postgres]
         include:
           # SQLite nur einmal mitnehmen, das ist billig und deckt einen
@@ -87,7 +88,7 @@ jobs:
 
       - name: Upgrade vom letzten Release
         env:
-          NC_VERSION: ${{ matrix.nextcloud }}
+          NC_VERSION: ${{ matrix.nextcloud_upgrade }}
           DB: ${{ matrix.database }}
           PORT: '8082'
           UPGRADE_FROM: v0.1.1

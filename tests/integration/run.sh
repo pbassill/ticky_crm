@@ -20,6 +20,7 @@ DB="${DB:-mariadb}"
 TABLE_PREFIX="${TABLE_PREFIX-oc_}"
 UPGRADE_FROM="${UPGRADE_FROM:-}"
 PORT="${PORT:-8081}"
+OUTPUT_SEVERITY="${OUTPUT_SEVERITY:-debug}"
 ADMIN_USER="admin"
 ADMIN_PASS="admin-integration-pw"
 
@@ -33,8 +34,30 @@ APP_CT="$RUN_ID-nc"
 DB_CT="$RUN_ID-db"
 WORKDIR="$(mktemp -d)"
 
-log()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 fail() { printf '\n\033[1;31m!! %s\033[0m\n' "$*"; exit 1; }
+
+OUTPUT_SEVERITY_DEBUG=0
+OUTPUT_SEVERITY_INFO=1
+OUTPUT_SEVERITY_WARNING=2
+OUTPUT_SEVERITY_ERROR=3
+case "$OUTPUT_SEVERITY" in
+    debug) OUTPUT_SEVERITY_NUM=$OUTPUT_SEVERITY_DEBUG ;;
+    info)  OUTPUT_SEVERITY_NUM=$OUTPUT_SEVERITY_INFO ;;
+    warning)  OUTPUT_SEVERITY_NUM=$OUTPUT_SEVERITY_WARNING ;;
+    error)  OUTPUT_SEVERITY_NUM=$OUTPUT_SEVERITY_ERROR ;;
+    *)     fail "Unbekannter OUTPUT_TYPE: $OUTPUT_TYPE (debug|info|warning|error)" ;;
+esac
+
+log_titel()  {
+    SEVERITY="$1"; shift
+    if [ "$OUTPUT_SEVERITY_NUM" -gt "$SEVERITY" ]; then return; fi
+    printf '\n\033[1;34m==> %s\033[0m\n' "$*";
+}
+log_text()  {
+    SEVERITY="$1"; shift
+    if [ "$OUTPUT_SEVERITY_NUM" -gt "$SEVERITY" ]; then return; fi
+    printf '%s' "$*";
+}
 
 cleanup() {
     local code=$?
@@ -42,16 +65,16 @@ cleanup() {
     # Bei einem Fehlschlag ist das Container-Log meist aufschlussreicher als
     # die Meldung, an der das Skript abgebrochen ist.
     if [ "$code" -ne 0 ]; then
-        echo
-        echo "--- Letzte Zeilen aus dem Nextcloud-Container ---"
+        log_text $OUTPUT_SEVERITY_ERROR ""
+        log_text $OUTPUT_SEVERITY_ERROR "--- Letzte Zeilen aus dem Nextcloud-Container ---"
         docker logs --tail 40 "$APP_CT" 2>&1 || true
     fi
 
     if [ -n "${KEEP_CONTAINERS:-}" ]; then
-        echo
-        echo "Container bleiben stehen: $APP_CT / $DB_CT"
-        echo "Oberfläche: http://localhost:$PORT  ($ADMIN_USER / $ADMIN_PASS)"
-        echo "Aufräumen:  docker rm -f $APP_CT $DB_CT && docker network rm $NETWORK"
+        log_text $OUTPUT_SEVERITY_DEBUG ""
+        log_text $OUTPUT_SEVERITY_DEBUG "Container bleiben stehen: $APP_CT / $DB_CT"
+        log_text $OUTPUT_SEVERITY_DEBUG "Oberfläche: http://localhost:$PORT  ($ADMIN_USER / $ADMIN_PASS)"
+        log_text $OUTPUT_SEVERITY_DEBUG "Aufräumen:  docker rm -f $APP_CT $DB_CT && docker network rm $NETWORK"
         return
     fi
 
@@ -61,7 +84,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-occ() { docker exec -u www-data "$APP_CT" php occ "$@"; }
+occ_pure() { docker exec -u www-data "$APP_CT" php occ "$@"; }
+
+occ() {
+    if [ "$OUTPUT_SEVERITY_NUM" -gt "$OUTPUT_SEVERITY_DEBUG" ]; then
+        occ_pure "$@" >/dev/null 2>&1
+    else
+        occ_pure "$@"
+    fi
+}
 
 wait_for() {
     local desc="$1"; shift
@@ -95,17 +126,21 @@ expect_ok() {
         "http://localhost:$PORT/apps/$APP_ID$path" || echo 000)"
 
     if [ "$status" != "200" ]; then
-        echo "--- Response ---"; cat "$WORKDIR/body.json" 2>/dev/null; echo
+        log_text $OUTPUT_SEVERITY_ERROR "--- Response ---"
+        cat "$WORKDIR/body.json" 2>/dev/null
+        log_text $OUTPUT_SEVERITY_ERROR ""
         fail "GET $path lieferte HTTP $status (erwartet 200)"
     fi
 
     # Die Controller fangen \Throwable ab und antworten teils mit HTTP 200 plus
     # error-Key, deshalb reicht der Statuscode allein nicht aus.
     if grep -q '"error"' "$WORKDIR/body.json"; then
-        echo "--- Response ---"; cat "$WORKDIR/body.json"; echo
+        log_text $OUTPUT_SEVERITY_ERROR "--- Response ---"
+        cat "$WORKDIR/body.json" 2>/dev/null
+        log_text $OUTPUT_SEVERITY_ERROR ""
         fail "GET $path enthält einen error-Key"
     fi
-    echo "  ok: GET $path"
+    log_text $OUTPUT_SEVERITY_DEBUG "  ok: GET $path"
 }
 
 # Die eigentliche Regressionsprüfung für Issue #2: existiert der Constraint
@@ -140,12 +175,12 @@ assert_foreign_key() {
     if [ "${count:-0}" -lt 1 ]; then
         fail "Kein Foreign Key auf $table – Issue #2 ist nicht behoben"
     fi
-    echo "  ok: Foreign Key auf $table vorhanden"
+    log_text $OUTPUT_SEVERITY_DEBUG "  ok: Foreign Key auf $table vorhanden"
 }
 
 # ---------------------------------------------------------------- Datenbank --
 
-log "Starte Umgebung (Nextcloud $NC_VERSION, DB $DB, Präfix '${TABLE_PREFIX}')"
+log_titel $OUTPUT_SEVERITY_DEBUG "Starte Umgebung (Nextcloud $NC_VERSION, DB $DB, Präfix '${TABLE_PREFIX}')"
 docker network create "$NETWORK" >/dev/null
 
 case "$DB" in
@@ -194,7 +229,7 @@ wait_for "Nextcloud-Quellen" curl -sf -o /dev/null "http://localhost:$PORT/statu
 # wird aus der Konfiguration gelesen und fällt sonst auf oc_ zurück. Der
 # zz-Präfix im Dateinamen sorgt dafür, dass unsere Datei zuletzt greift.
 if [ "$TABLE_PREFIX" != "oc_" ]; then
-    log "Setze abweichendes Tabellenpräfix: '${TABLE_PREFIX}'"
+    log_titel $OUTPUT_SEVERITY_DEBUG "Setze abweichendes Tabellenpräfix: '${TABLE_PREFIX}'"
     docker exec -u www-data -i "$APP_CT" \
         tee /var/www/html/config/zz-prefix.config.php >/dev/null <<EOF
 <?php
@@ -202,20 +237,20 @@ if [ "$TABLE_PREFIX" != "oc_" ]; then
 EOF
 fi
 
-log "Installiere Nextcloud"
+log_titel $OUTPUT_SEVERITY_DEBUG "Installiere Nextcloud"
 occ maintenance:install \
     --admin-user "$ADMIN_USER" --admin-pass "$ADMIN_PASS" \
     "${INSTALL_ARGS[@]}"
 occ config:system:set trusted_domains 1 --value="localhost:$PORT"
 occ config:system:set loglevel --value=1 --type=integer
 
-log "Installiere Abhängigkeit: contacts"
+log_titel $OUTPUT_SEVERITY_DEBUG "Installiere Abhängigkeit: contacts"
 occ app:install contacts || fail "contacts-App ließ sich nicht installieren"
 
 # ------------------------------------------------- Optional: Upgrade-Pfad --
 
 if [ -n "$UPGRADE_FROM" ]; then
-    log "Baseline: installiere $UPGRADE_FROM"
+    log_titel $OUTPUT_SEVERITY_DEBUG "Baseline: installiere $UPGRADE_FROM"
     OLD_SRC="$WORKDIR/old"
     mkdir -p "$OLD_SRC"
     git -C "$REPO_ROOT" archive "$UPGRADE_FROM" | tar -x -C "$OLD_SRC" \
@@ -229,39 +264,44 @@ if [ -n "$UPGRADE_FROM" ]; then
     install_app_source "$OLD_SRC"
     occ app:enable "$APP_ID" || fail "Baseline $UPGRADE_FROM ließ sich nicht aktivieren"
 
-    log "Spiele HEAD ein und führe Upgrade $OLD_VER -> $NEW_VER aus"
+    log_titel $OUTPUT_SEVERITY_DEBUG "Spiele HEAD ein und führe Upgrade $OLD_VER -> $NEW_VER aus"
     install_app_source "$APP_SOURCE"
     occ upgrade || fail "occ upgrade fehlgeschlagen (Migration defekt)"
 else
-    log "Frischinstallation der App"
+    log_titel $OUTPUT_SEVERITY_DEBUG "Frischinstallation der App"
     install_app_source "$APP_SOURCE"
-    occ app:enable "$APP_ID" || fail "app:enable fehlgeschlagen (Migration defekt)"
+    occ app:enable "$APP_ID" || fail "app:enable fehlgeschlagen"
 fi
 
 # ------------------------------------------------------------- Prüfungen --
 
-log "Prüfe App-Status"
-APP_STATE="$(occ config:app:get "$APP_ID" enabled --default-value=no | tr -d '[:space:]')"
+log_titel $OUTPUT_SEVERITY_DEBUG "Prüfe App-Status"
+APP_STATE="$(occ_pure config:app:get "$APP_ID" enabled --default-value=no | tr -d '[:space:]')"
 [ "$APP_STATE" = "yes" ] || fail "App ist nicht aktiviert (Status: '$APP_STATE')"
-echo "  ok: App ist aktiviert"
+log_text $OUTPUT_SEVERITY_DEBUG "  ok: App ist aktiviert"
 
-log "Prüfe Schema"
+log_titel $OUTPUT_SEVERITY_DEBUG "Prüfe Schema"
 assert_foreign_key
 occ db:add-missing-primary-keys
 occ db:add-missing-columns
 occ db:add-missing-indices
 
-log "Smoke-Test der API"
+log_titel $OUTPUT_SEVERITY_DEBUG "Smoke-Test der API"
 expect_ok "/api/v1/clients"
 
-log "Prüfe Log auf Fehler"
+log_titel $OUTPUT_SEVERITY_DEBUG "Prüfe Log auf Fehler"
 LOGFILE="$WORKDIR/nextcloud.log"
 docker exec "$APP_CT" sh -c 'cat /var/www/html/data/nextcloud.log 2>/dev/null || true' > "$LOGFILE"
 if grep -E '"level":[34]' "$LOGFILE" 2>/dev/null | grep -q "$APP_ID"; then
-    echo "--- Relevante Log-Zeilen ---"
+    log_text $OUTPUT_SEVERITY_ERROR "--- Relevante Log-Zeilen ---"
     grep -E '"level":[34]' "$LOGFILE" | grep "$APP_ID"
     fail "Fehler-Level-Einträge der App im nextcloud.log"
 fi
-echo "  ok: keine Fehler im Log"
+log_text $OUTPUT_SEVERITY_DEBUG "  ok: keine Fehler im Log"
 
-log "Erfolgreich: NC $NC_VERSION / $DB / Präfix '${TABLE_PREFIX}'"
+if [ -n "$UPGRADE_FROM" ]; then
+    log_titel $OUTPUT_SEVERITY_INFO "Erfolgreich Upgrade: NC $NC_VERSION / $DB / Präfix '${TABLE_PREFIX}'"
+else
+    log_titel $OUTPUT_SEVERITY_INFO "Erfolgreich: NC $NC_VERSION / $DB / Präfix '${TABLE_PREFIX}'"
+fi
+cleanup
