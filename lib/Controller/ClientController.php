@@ -2,6 +2,7 @@
 namespace OCA\TickyCRM\Controller;
 
 use OCA\TickyCRM\Service\ClientContactService;
+use OCA\TickyCRM\Service\ClientRelationService;
 use OCA\TickyCRM\Service\ClientService;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -19,6 +20,7 @@ class ClientController extends ApiController {
         IRequest $request,
         private ClientService $service,
         private ClientContactService $clientContactService,
+        private ClientRelationService $clientRelationService,
         private IUserSession $userSession,
         private LoggerInterface $logger,
     ) {
@@ -182,4 +184,65 @@ class ClientController extends ApiController {
 
         return new DataResponse(['success' => true]);
     }
-}
+
+    // -------------------------------------------------------------------------
+    // Client Relations
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns all relations for the given client (both directions).
+     */
+    #[NoAdminRequired]
+    public function getRelations(string $uuid): DataResponse {
+        try {
+            return new DataResponse($this->clientRelationService->getRelationsForClient($uuid));
+        } catch (DoesNotExistException) {
+            return new DataResponse([], Http::STATUS_NOT_FOUND);
+        } catch (\Throwable $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Creates a new relation between this client and another.
+     */
+    #[NoAdminRequired]
+    public function addRelation(string $uuid): DataResponse {
+        $relatedUuid   = (string)$this->request->getParam('related_uuid', '');
+        $relationType  = (string)$this->request->getParam('relation_type', 'other');
+        $notes         = $this->request->getParam('notes');
+
+        if ($relatedUuid === '') {
+            return new DataResponse(['message' => 'related_uuid is required.'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $relation = $this->clientRelationService->addRelation($uuid, $relatedUuid, $relationType, $notes);
+            return new DataResponse($relation, Http::STATUS_CREATED);
+        } catch (DoesNotExistException) {
+            return new DataResponse(['message' => 'One or both clients not found.'], Http::STATUS_NOT_FOUND);
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(['message' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+        } catch (\RuntimeException $e) {
+            return new DataResponse(['message' => $e->getMessage()], Http::STATUS_CONFLICT);
+        } catch (\Throwable $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Deletes a relation by its id.
+     */
+    #[NoAdminRequired]
+    public function deleteRelation(string $uuid, int $relationId): DataResponse {
+        try {
+            $this->clientRelationService->deleteRelation($uuid, $relationId);
+            return new DataResponse(['success' => true]);
+        } catch (DoesNotExistException) {
+            return new DataResponse([], Http::STATUS_NOT_FOUND);
+        } catch (\RuntimeException $e) {
+            return new DataResponse(['message' => $e->getMessage()], Http::STATUS_FORBIDDEN);
+        } catch (\Throwable $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }}

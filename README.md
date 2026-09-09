@@ -27,7 +27,7 @@ An Open Source, privacy-first Customer Relationship Management (CRM) app built f
 - ✅ **Customer Notes**
 - ✅ **Contacts Integration**
 - ✅ **Address book for CRM**
-- 🔄 **Relations between customers**
+- ✅ **Relations between customers**
 - 🔄 **Products**
 - 🔄 **File Integration**
 - ⏳ **Helpdesk**
