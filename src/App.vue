@@ -29,36 +29,40 @@
       </template>
     </NcAppNavigation>
 
-    <NcAppContent :page-heading="t('ticky_crm', 'page_heading_clients')">
-      <TickyHeader
-        :title="t('ticky_crm', 'app_title')"
-        :subtitle="n('ticky_crm', 'client_count_singular', 'client_count_plural', clients.length, { count: clients.length })"
-      >
-        <template #actions>
-          <NcButton type="primary" @click="isDialogOpen = true">
-            <template #icon>
-              <IconPlus :size="20" />
-            </template>
-            {{ t('ticky_crm', 'client_create_submit') }}
-          </NcButton>
-        </template>
-      </TickyHeader>
+    <NcAppContent :page-heading="activeNav === 'products' ? t('ticky_crm', 'nav_products') : t('ticky_crm', 'page_heading_clients')">
+      <template v-if="activeNav === 'clients'">
+        <TickyHeader
+          :title="t('ticky_crm', 'app_title')"
+          :subtitle="n('ticky_crm', 'client_count_singular', 'client_count_plural', clients.length, { count: clients.length })"
+        >
+          <template #actions>
+            <NcButton type="primary" @click="isDialogOpen = true">
+              <template #icon>
+                <IconPlus :size="20" />
+              </template>
+              {{ t('ticky_crm', 'client_create_submit') }}
+            </NcButton>
+          </template>
+        </TickyHeader>
 
-      <TickyTable :value="clients" @row-click="selectedClient = $event">
-        <TickyColumn field="name" :header="t('ticky_crm', 'column_name')" max-width="250px" />
-        <TickyColumn field="client_number" :header="t('ticky_crm', 'column_client_number')" />
-        <TickyColumn field="contact_email" :header="t('ticky_crm', 'column_email')" />
-        <TickyColumn field="phone" :header="t('ticky_crm', 'column_phone')" />
-      </TickyTable>
+        <TickyTable :value="clients" @row-click="selectedClient = $event">
+          <TickyColumn field="name" :header="t('ticky_crm', 'column_name')" max-width="250px" />
+          <TickyColumn field="client_number" :header="t('ticky_crm', 'column_client_number')" />
+          <TickyColumn field="contact_email" :header="t('ticky_crm', 'column_email')" />
+          <TickyColumn field="phone" :header="t('ticky_crm', 'column_phone')" />
+        </TickyTable>
 
-      <NewClientDialog
-        v-model:open="isDialogOpen"
-        @client-created="handleClientCreated"
-      />
+        <NewClientDialog
+          v-model:open="isDialogOpen"
+          @client-created="handleClientCreated"
+        />
+      </template>
+
+      <ProductList v-else-if="activeNav === 'products'" />
     </NcAppContent>
 
     <NcAppSidebar
-      v-if="selectedClient"
+      v-if="selectedClient && activeNav === 'clients'"
       :title="selectedClient.name"
       :subtitle="selectedClient.client_number"
       :active="activeSidebarTab"
@@ -139,6 +143,8 @@ import ClientTab from './components/ClientTab.vue'
 import ClientNotesTab from './components/ClientNotesTab.vue'
 import ContactTab from './components/ContactTab.vue'
 import RelationsTab from './components/RelationsTab.vue'
+import IconPackageVariant from 'vue-material-design-icons/PackageVariant.vue'
+import ProductList from './components/ProductList.vue'
 import { getClients } from './services/clientService'
 import SettingsDialog from './dialogs/SettingsDialog.vue'
 
@@ -151,7 +157,8 @@ const activeNav        = ref('clients')
 
 // Navigation reaktiv übersetzen via computed
 const navItems = computed(() => [
-  { id: 'clients', name: t('ticky_crm', 'nav_clients'), icon: IconAccountMultiple }
+  { id: 'clients',  name: t('ticky_crm', 'nav_clients'),  icon: IconAccountMultiple },
+  { id: 'products', name: t('ticky_crm', 'nav_products'), icon: IconPackageVariant },
 ])
 
 // Settings State

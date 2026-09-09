@@ -147,7 +147,32 @@
     "relation_type_reseller": "Reseller",
     "relation_type_reseller_client": "Reseller customer",
     "relation_type_competitor": "Competitor",
-    "relation_type_other": "Other"
+    "relation_type_other": "Other",
+
+    "nav_products": "Products & Services",
+    "product_create_title": "New Product / Service",
+    "product_edit_title": "Edit Product / Service",
+    "product_create_submit": "Create product",
+    "product_save": "Save",
+    "product_count_singular": "1 product in total",
+    "product_count_plural": "{count} products in total",
+    "product_search_placeholder": "Search by SKU, name or category…",
+    "product_no_results": "No products match your search.",
+    "product_empty": "No products or services in the catalogue yet.",
+    "product_status_discontinued": "Discontinued",
+    "product_delete_confirm_title": "Delete product",
+    "product_delete_confirm_body": "Are you sure you want to permanently delete \"{name}\"?",
+    "product_delete_confirm": "Delete",
+
+    "field_sku": "SKU",
+    "field_description": "Description",
+    "field_price": "Unit price",
+    "field_currency": "Currency",
+    "field_unit": "Unit",
+    "field_category": "Category",
+    "section_pricing": "Pricing",
+
+    "error_duplicate_sku": "This SKU is already in use."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

@@ -148,7 +148,32 @@
     "relation_type_reseller": "Reseller",
     "relation_type_reseller_client": "Reseller-Kunde",
     "relation_type_competitor": "Wettbewerber",
-    "relation_type_other": "Sonstiges"
+    "relation_type_other": "Sonstiges",
+
+    "nav_products": "Produkte & Leistungen",
+    "product_create_title": "Neues Produkt / Leistung",
+    "product_edit_title": "Produkt / Leistung bearbeiten",
+    "product_create_submit": "Produkt erstellen",
+    "product_save": "Speichern",
+    "product_count_singular": "1 Produkt gesamt",
+    "product_count_plural": "{count} Produkte gesamt",
+    "product_search_placeholder": "Nach SKU, Name oder Kategorie suchen…",
+    "product_no_results": "Keine Produkte gefunden.",
+    "product_empty": "Noch keine Produkte oder Leistungen im Katalog.",
+    "product_status_discontinued": "Eingestellt",
+    "product_delete_confirm_title": "Produkt löschen",
+    "product_delete_confirm_body": "Möchten Sie \"{name}\" wirklich dauerhaft löschen?",
+    "product_delete_confirm": "Löschen",
+
+    "field_sku": "Artikelnummer (SKU)",
+    "field_description": "Beschreibung",
+    "field_price": "Einzelpreis",
+    "field_currency": "Währung",
+    "field_unit": "Einheit",
+    "field_category": "Kategorie",
+    "section_pricing": "Preisgestaltung",
+
+    "error_duplicate_sku": "Diese Artikelnummer ist bereits vergeben."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }
