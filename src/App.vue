@@ -87,6 +87,16 @@
         <ContactTab :client-id="selectedClient.uuid" />
       </NcAppSidebarTab>
 
+      <NcAppSidebarTab id="ticky-relations" :name="t('ticky_crm', 'tab_relations')" :tab-index="3">
+        <template #icon>
+          <IconAccountNetwork :size="20" />
+        </template>
+        <RelationsTab
+          :client-uuid="selectedClient.uuid"
+          @navigate-to-client="handleNavigateToClient"
+        />
+      </NcAppSidebarTab>
+
       <NcAppSidebarTab id="ticky-activities" :name="t('ticky_crm', 'tab_activities')" :tab-index="2">
         <template #icon>
           <svg
@@ -117,6 +127,7 @@ import NcButton from '@nextcloud/vue/components/NcButton'
 import IconPlus from 'vue-material-design-icons/Plus.vue'
 import IconAccount from 'vue-material-design-icons/Account.vue'
 import IconAccountMultiple from 'vue-material-design-icons/AccountMultiple.vue'
+import IconAccountNetwork from 'vue-material-design-icons/AccountNetwork.vue'
 import IconNoteText from 'vue-material-design-icons/NoteTextOutline.vue'
 import IconCogOutline from 'vue-material-design-icons/CogOutline.vue'
 import TickyTable from './components/TickyTable.vue'
@@ -127,6 +138,7 @@ import ActivityTab from './components/ActivityTab.vue'
 import ClientTab from './components/ClientTab.vue'
 import ClientNotesTab from './components/ClientNotesTab.vue'
 import ContactTab from './components/ContactTab.vue'
+import RelationsTab from './components/RelationsTab.vue'
 import { getClients } from './services/clientService'
 import SettingsDialog from './dialogs/SettingsDialog.vue'
 
@@ -188,6 +200,14 @@ const handleClientUpdated = (updatedClient) => {
 const handleClientDeleted = (deletedClientId) => {
   clients.value = clients.value.filter(c => c.uuid !== deletedClientId)
   selectedClient.value = null
+}
+
+const handleNavigateToClient = (uuid) => {
+  const client = clients.value.find(c => c.uuid === uuid)
+  if (client) {
+    selectedClient.value = uuid === selectedClient.value?.uuid ? null : client
+    nextTick(() => { selectedClient.value = client })
+  }
 }
 
 const loadClients = async () => {

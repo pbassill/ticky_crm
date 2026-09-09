@@ -82,6 +82,7 @@
     "tab_details": "Details",
     "tab_notes": "Notes",
     "tab_activities": "Activities",
+    "tab_relations": "Relations",
 
     "field_address_label": "Label",
     "field_country_code": "Country Code",
@@ -124,7 +125,29 @@
     "contact_error_link_failed": "Contact could not be linked.",
     "contact_success_unlinked": "Link was removed.",
     "contact_error_unlink_failed": "Link could not be removed.",
-    "contact_error_missing_uid": "Contact does not have a valid UID."
+    "contact_error_missing_uid": "Contact does not have a valid UID.",
+
+    "relation_search_placeholder": "Search client to relate…",
+    "relation_type_placeholder": "Relation type…",
+    "relation_no_clients": "No clients found.",
+    "relation_add_button": "Add relation",
+    "relation_loading": "Loading relations…",
+    "relation_empty_state": "No relations defined for this client yet.",
+    "relation_actions_label": "More actions for {name}",
+    "relation_view_client": "View client",
+    "relation_remove": "Remove relation",
+    "relation_error_load": "Relations could not be loaded.",
+    "relation_error_add": "Relation could not be added.",
+    "relation_error_remove": "Relation could not be removed.",
+    "relation_success_added": "Relation was added.",
+    "relation_success_removed": "Relation was removed.",
+    "relation_type_partner": "Partner",
+    "relation_type_subsidiary": "Subsidiary",
+    "relation_type_parent": "Parent company",
+    "relation_type_reseller": "Reseller",
+    "relation_type_reseller_client": "Reseller customer",
+    "relation_type_competitor": "Competitor",
+    "relation_type_other": "Other"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

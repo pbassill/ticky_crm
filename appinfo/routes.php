@@ -13,6 +13,10 @@ return [
         ['name' => 'client#linkContact', 'url' => '/api/v1/clients/{uuid}/contacts', 'verb' => 'POST'],
         ['name' => 'client#unlinkContact', 'url' => '/api/v1/clients/{uuid}/contacts/{cardId}', 'verb' => 'DELETE', 'requirements' => ['cardId' => '\d+']],
 
+        ['name' => 'client#getRelations',  'url' => '/api/v1/clients/{uuid}/relations',              'verb' => 'GET'],
+        ['name' => 'client#addRelation',   'url' => '/api/v1/clients/{uuid}/relations',              'verb' => 'POST'],
+        ['name' => 'client#deleteRelation','url' => '/api/v1/clients/{uuid}/relations/{relationId}', 'verb' => 'DELETE', 'requirements' => ['relationId' => '\d+']],
+
         ['name' => 'address#index', 'url' => '/api/v1/clients/{clientUuid}/addresses', 'verb' => 'GET'],
         ['name' => 'contact#search', 'url' => '/api/v1/contacts/search', 'verb' => 'GET'],
 
