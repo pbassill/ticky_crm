@@ -30,5 +30,11 @@ return [
         ['name' => 'settings#getSettings',  'url' => '/api/v1/settings', 'verb' => 'GET'],
         ['name' => 'settings#createAddressBook',  'url' => '/api/v1/settings/addressbook', 'verb' => 'POST'],
         ['name' => 'settings#saveSettings', 'url' => '/api/v1/settings', 'verb' => 'POST'],
+
+        ['name' => 'product#index',  'url' => '/api/v1/products',       'verb' => 'GET'],
+        ['name' => 'product#show',   'url' => '/api/v1/products/{uuid}', 'verb' => 'GET'],
+        ['name' => 'product#create', 'url' => '/api/v1/products',       'verb' => 'POST'],
+        ['name' => 'product#update', 'url' => '/api/v1/products/{uuid}', 'verb' => 'PUT'],
+        ['name' => 'product#delete', 'url' => '/api/v1/products/{uuid}', 'verb' => 'DELETE'],
     ]
 ];
